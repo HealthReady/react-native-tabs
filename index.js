@@ -16,19 +16,29 @@ class Tabs extends Component {
         super(props);
         this.state = {}
     }
-
-    static propTypes = {}
+    i
+    static propTypes = {
+        popoverTextStyle: Text.propTypes.style,
+        popoverMessage: React.PropTypes.string.isRequired,
+        badgeSize: React.PropTypes.number,
+        popoverHeight: React.PropTypes.number,
+        popoverBorderRadius: React.PropTypes.number,
+        popoverBackgroundColor: React.PropTypes.string,
+        popoverBorderColor: React.PropTypes.string,
+        arrowSize: React.PropTypes.object
+    }
 
     static defaultProps = {
-        popOver: true,
-        badge: true,
-        popOverMessage: 'This is the message',
+        popoverMessage: 'This is the message so that it wraps',
         badgeSize: 14,
-        popOverHeight: 50,
-        popOverBorderRadius: 5,
-        popOverBackgroundColor: 'rgba(180,180,180,0.65)',
-        popOverBorderColor: 'rgba(110,110,110,0.65)',
-        arrowSize: {width: 5, height: 5}
+        popoverHeight: 50,
+        popoverBorderRadius: 5,
+        popoverBackgroundColor: 'rgba(180,180,180,0.65)',
+        popoverBorderColor: 'rgba(110,110,110,0.65)',
+        arrowSize: {
+            width: 5,
+            height: 5
+        }
     }
 
     onSelect(el) {
@@ -60,7 +70,6 @@ class Tabs extends Component {
 
     render() {
         const self = this;
-        console.log('raect-native-tabs: index', this.props);
         let selected = this.props.selected
         if (!selected) {
             React.Children.forEach(this.props.children.filter(c=>c), el=> {
@@ -85,23 +94,21 @@ class Tabs extends Component {
                                 style: [el.props.style, this.props.selectedStyle, el.props.selectedStyle]
                             }) : el}
                         </TouchableOpacity>
-                        {this.props.popOver && this.state.tabWidth && this.state.tabHeight ?
-                            <View style={[styles.popOverContainer, {width: this.state.tabWidth, top: (this.props.popOverHeight * -1),
-                                height: this.props.popOverHeight}]}>
-                                <TouchableOpacity onPress={this.props.popOver.onPress}
-                                                  style={styles.popOverWrapper}>
-                                    <Text style={styles.popOverText}>{this.props.popOverMessage}</Text>
+                        {el.props.popover && this.state.tabWidth && this.state.tabHeight ?
+                            <View style={[styles.popoverContainer, {width: this.state.tabWidth, bottom: this.state.tabHeight +
+                            (el.props.arrowSize || this.props.arrowSize.height * 2) + 3}]}>
+                                <TouchableOpacity onPress={el.props.popover.onPress || null} activeOpacity={el.props.popover.activeOpacity || 1.0}
+                                                  style={[styles.popoverWrapper]}>
+                                    <Text style={[styles.popoverText, el.props.popoverTextStyle || this.props.popoverTextStyle]}>{el.props.popover.message}</Text>
                                 </TouchableOpacity>
-                                <View style={styles.popOverArrowWrapper}>
-                                    <View style={[styles.popOverArrow, this.getArrowDynamicStyle()]}/>
-                                </View>
+                                <View style={[styles.popoverArrow, this.getArrowDynamicStyle()]}/>
                             </View> : null}
-                        {this.props.badge && this.state.tabWidth && this.state.tabHeight ?
+                        {el.props.badge && this.state.tabWidth && this.state.tabHeight ?
                             <View
-                                style={[styles.badgeWrapper, {width: this.props.badgeSize, height: this.props.badgeSize,
-                                    borderRadius: this.props.badgeSize / 2}, {right: this.state.tabWidth / 4}]}>
+                                style={[styles.badgeWrapper, {width: el.props.badgeSize || this.props.badgeSize, height: el.props.badgeSize || this.props.badgeSize,
+                                    borderRadius: (el.props.badgeSize || this.props.badgeSize) / 2}, {right: this.state.tabWidth / 4}]}>
                                 <Text
-                                    style={[styles.badgeText, {marginLeft: 1, marginTop: 1}]}>{this.props.badgeCount || 0}</Text>
+                                    style={[styles.badgeText, {marginLeft: 1, marginTop: 1}]}>{el.props.badge.count || 0}</Text>
                             </View> : null}
                     </View>
                 )}
@@ -128,31 +135,41 @@ var styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    popOverContainer: {
+    popoverContainer: {
         flexDirection: 'column',
         position: 'absolute',
         paddingLeft: 1,
-        paddingRight: 1 ,
+        paddingRight: 1,
     },
-    popOverWrapper: {
+    popoverWrapper: {
         alignSelf: 'stretch',
-        borderColor: 'rgba(200,200,200,0.65)',
-        borderWidth: 1,
+        //borderColor: 'rgba(200,200,200,0.65)',
+        //borderWidth: 1,
+        padding: 3,
         borderRadius: 5,
-        backgroundColor: 'rgba(230,230,230,0.65)',
+        backgroundColor: 'rgba(208,69,116,1)',
+        shadowColor: '#000000',
+        shadowOpacity: 0.5,
+        shadowRadius: 2,
+        shadowOffset: {
+            height: 2,
+            width: 2
+        }
     },
-    popOverText: {
+    popoverText: {
         fontFamily: 'AvenirNext-Regular',
         fontSize: 10,
-        color: 'rgba(0,0,0,0.65)',
-        textAlign: 'center'
+        //color: 'rgba(0,0,0,0.65)',
+        color: '#FFF',
+        textAlign: 'center',
+        textShadowOffset: {width: 1, height: 1}, textShadowRadius: 1, textShadowColor: '#222222'
     },
-    popOverArrowWrapper: {
+    popoverArrowWrapper: {
         flex: 1,
         // borderTopWidth: 1,
         // borderTopColor: Style.COLOR_TAB_BAR_POPOVER_BACKGROUND,
     },
-    popOverArrow: {
+    popoverArrow: {
         width: 0,
         height: 0,
         position: 'absolute',
@@ -160,7 +177,14 @@ var styles = StyleSheet.create({
         borderStyle: 'solid',
         borderLeftColor: 'transparent',
         borderRightColor: 'transparent',
-        borderTopColor: 'rgba(230,230,230,0.65)',
+        borderTopColor: 'rgba(208,69,116,1)',
+        shadowColor: '#000000',
+        shadowOpacity: 0.5,
+        shadowRadius: 2,
+        shadowOffset: {
+            height: 2,
+            width: 2
+        }
     },
     badgeWrapper: {
         position: 'absolute',
