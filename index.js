@@ -9,14 +9,22 @@ import {
     View,
     Text,
     TouchableOpacity,
+    Keyboard,
+    Platform,
 } from 'react-native';
 
+type State = {
+    keyboardUp: boolean,
+}
+
 class Tabs extends Component {
+    state: State = {};
+
     constructor(props) {
         super(props);
         this.state = {}
     }
-    i
+
     static propTypes = {
         popoverTextStyle: Text.propTypes.style,
         popoverMessage: React.PropTypes.string.isRequired,
@@ -41,13 +49,28 @@ class Tabs extends Component {
         }
     }
 
-    onSelect(el) {
+    onSelect(el){
         if (el.props.onSelect) {
             el.props.onSelect(el);
         } else if (this.props.onSelect) {
             this.props.onSelect(el);
         }
     }
+
+    componentWillMount(){
+        if (Platform.OS==='android') {
+            Keyboard.addListener('keyboardDidShow', this.keyboardWillShow);
+            Keyboard.addListener('keyboardDidHide', this.keyboardWillHide);
+        }
+    }
+
+    keyboardWillShow = (e) => {
+        this.setState({ keyboardUp: true });
+    };
+
+    keyboardWillHide = (e) => {
+        this.setState({ keyboardUp: false });
+    };
 
     getArrowDynamicStyle() {
         var {tabX, tabY, tabWidth, tabHeight} = this.state;
@@ -68,17 +91,16 @@ class Tabs extends Component {
         }
     }
 
-    render() {
+    render(){
         const self = this;
         let selected = this.props.selected
-        if (!selected) {
-            React.Children.forEach(this.props.children.filter(c=>c), el=> {
-                if (!selected || el.props.initial) {
+        if (!selected){
+            React.Children.forEach(this.props.children.filter(c=>c), el=>{
+                if (!selected || el.props.initial){
                     selected = el.props.name || el.key;
                 }
             });
         }
-        console.log('index.js', this.props);
         return (
             <View style={[styles.tabbarView, this.props.style]}>
                 {React.Children.map(this.props.children.filter(c=>c), (el)=>
@@ -119,13 +141,13 @@ class Tabs extends Component {
 }
 var styles = StyleSheet.create({
     tabbarView: {
-        position: 'absolute',
-        bottom: 0,
-        right: 0,
-        left: 0,
-        height: 50,
-        opacity: 1,
-        backgroundColor: 'transparent',
+        position:'absolute',
+        bottom:0,
+        right:0,
+        left:0,
+        height:50,
+        opacity:1,
+        backgroundColor:'transparent',
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center'
@@ -135,6 +157,9 @@ var styles = StyleSheet.create({
         height: 50,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    hidden: {
+        height: 0,
     },
     popoverContainer: {
         flexDirection: 'column',
