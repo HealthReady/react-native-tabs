@@ -19,6 +19,10 @@ State = {
     keyboardUp: boolean,
 };
 
+type State = {
+    keyboardUp: boolean,
+};
+
 class Tabs extends Component {
     state: State = {};
 
