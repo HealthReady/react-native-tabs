@@ -9,15 +9,26 @@ import {
     View,
     Text,
     TouchableOpacity,
+    Keyboard,
+    Platform,
 } from 'react-native';
+import * as Animatable from 'react-native-animatable';
+
+type
+State = {
+    keyboardUp: boolean,
+};
 
 class Tabs extends Component {
+    state: State = {};
+
     constructor(props) {
         super(props);
         this.state = {}
     }
-    i
+
     static propTypes = {
+        popovers: React.PropTypes.object,
         popoverTextStyle: Text.propTypes.style,
         popoverMessage: React.PropTypes.string.isRequired,
         badgeSize: React.PropTypes.number,
@@ -25,16 +36,21 @@ class Tabs extends Component {
         popoverBorderRadius: React.PropTypes.number,
         popoverBackgroundColor: React.PropTypes.string,
         popoverBorderColor: React.PropTypes.string,
-        arrowSize: React.PropTypes.object
+        badges: React.PropTypes.object,
+        badgeBackgroundColor: React.PropTypes.string,
+        arrowSize: React.PropTypes.object,
     }
 
     static defaultProps = {
-        popoverMessage: 'This is the message so that it wraps',
-        badgeSize: 14,
+        popovers: null,
+        popoverMessage: '',
         popoverHeight: 50,
         popoverBorderRadius: 5,
-        popoverBackgroundColor: 'rgba(180,180,180,0.65)',
-        popoverBorderColor: 'rgba(110,110,110,0.65)',
+        popoverBackgroundColor: 'rgba(242,103,37,1)',
+        popoverBorderColor: 'rgba(242,103,37,0.65)',
+        badges: null,
+        badgeSize: 14,
+        badgeBackgroundColor: 'red',
         arrowSize: {
             width: 5,
             height: 5
@@ -49,14 +65,47 @@ class Tabs extends Component {
         }
     }
 
+    componentWillReceiveProps(nextProps) {
+        React.Children.forEach(this.props.children.filter(c=>c), el=> {
+            if (this.props.popovers) {
+                if (this.props.popovers[el.props.sceneKey] === undefined && nextProps.popovers[el.props.sceneKey]) {
+
+                } else if (this.props.popovers[el.props.sceneKey] && nextProps.popovers[el.props.sceneKey] &&
+                    this.refs['popover' + el.props.sceneKey] && this.props.popovers[el.props.sceneKey].message !==
+                    nextProps.popovers[el.props.sceneKey].message) {
+                    this.refs['popover' + el.props.sceneKey].fadeInUp(500);
+                }
+            }
+            if (this.props.badges) {
+                if (this.props.badges[el.props.sceneKey] === undefined && nextProps.badges[el.props.sceneKey] &&
+                    this.refs['badge' + el.props.sceneKey]) {
+                    this.refs['badge' + el.props.sceneKey].zoomIn(1500);
+                } else if (this.props.badges[el.props.sceneKey] && nextProps.badges[el.props.sceneKey] &&
+                    this.refs['badge' + el.props.sceneKey] && this.props.badges[el.props.sceneKey].count !== nextProps.badges[el.props.sceneKey].count) {
+                    this.refs['badge' + el.props.sceneKey].rubberBand(500);
+                }
+            }
+        });
+    }
+
+    componentWillMount() {
+        if (Platform.OS === 'android') {
+            Keyboard.addListener('keyboardDidShow', this.keyboardWillShow);
+            Keyboard.addListener('keyboardDidHide', this.keyboardWillHide);
+        }
+    }
+
+    keyboardWillShow = (e) => {
+        this.setState({keyboardUp: true});
+    };
+
+    keyboardWillHide = (e) => {
+        this.setState({keyboardUp: false});
+    };
+
     getArrowDynamicStyle() {
         var {tabX, tabY, tabWidth, tabHeight} = this.state;
         var arrowSize = this.props.arrowSize;
-
-        // Create the arrow from a rectangle with the appropriate borderXWidth set
-        // A rotation is then applied dependending on the placement
-        // Also make it slightly bigger
-        // to fix a visual artifact when the popover is animated with a scale
         var width = arrowSize.width + 2;
         var height = arrowSize.height * 2 + 2;
 
@@ -81,11 +130,13 @@ class Tabs extends Component {
         return (
             <View style={[styles.tabbarView, this.props.style]}>
                 {React.Children.map(this.props.children.filter(c=>c), (el)=>
-                    <View style={{flex: 1}} onLayout={(event) => {var {x, y, width, height} = event.nativeEvent.layout;
-                        this.setState({tabX: x, tabY: y, tabWidth: width, tabHeight: height})}}>
-                        <TouchableOpacity key={el.props.name+"touch"}
+                    <View style={{flex: 1}} onLayout={(event) => {
+                        var {x, y, width, height} = event.nativeEvent.layout;
+                        this.setState({tabX: x, tabY: y, tabWidth: width, tabHeight: height})
+                    }}>
+                        <TouchableOpacity key={el.props.name + "touch"}
                                           style={[styles.iconView, this.props.iconStyle, (el.props.name || el.key) == selected ?
-                                          this.props.selectedIconStyle || el.props.selectedIconStyle || {} : {} ]}
+                                          this.props.selectedIconStyle || el.props.selectedIconStyle || {} : {}]}
                                           onPress={()=>!self.props.locked && self.onSelect(el)}
                                           onLongPress={()=>self.onSelect(el)}
                                           activeOpacity={el.props.pressOpacity}>
@@ -94,22 +145,36 @@ class Tabs extends Component {
                                 style: [el.props.style, this.props.selectedStyle, el.props.selectedStyle]
                             }) : el}
                         </TouchableOpacity>
-                        {el.props.popover && this.state.tabWidth && this.state.tabHeight ?
-                            <View style={[styles.popoverContainer, {width: this.state.tabWidth, bottom: this.state.tabHeight +
-                            (el.props.arrowSize || this.props.arrowSize.height * 2) + 3}]}>
-                                <TouchableOpacity onPress={el.props.popover.onPress || null} activeOpacity={el.props.popover.activeOpacity || 1.0}
-                                                  style={[styles.popoverWrapper]}>
-                                    <Text style={[styles.popoverText, el.props.popoverTextStyle || this.props.popoverTextStyle]}>{el.props.popover.message}</Text>
+                        {this.props.popovers && this.props.popovers[el.props.sceneKey] && this.state.tabWidth && this.state.tabHeight ?
+                            <Animatable.View ref={"popover" + el.props.sceneKey} style={[styles.popoverContainer, {
+                                width: this.state.tabWidth, bottom: this.state.tabHeight +
+                                (this.props.arrowSize.height * 2) + 5
+                            }]}>
+                                <TouchableOpacity onPress={() => this.props.popoverOnPress(el.props.sceneKey)}
+                                                  activeOpacity={1.0}
+                                                  style={[styles.popoverWrapper, {backgroundColor: this.props.popoverBackgroundColor}]}>
+                                    <Text style={[styles.popoverText, this.props.popoverTextStyle]}>
+                                        {this.props.popovers[el.props.sceneKey].message}
+                                    </Text>
                                 </TouchableOpacity>
-                                <View style={[styles.popoverArrow, this.getArrowDynamicStyle()]}/>
-                            </View> : null}
-                        {el.props.badge && this.state.tabWidth && this.state.tabHeight ?
-                            <View
-                                style={[styles.badgeWrapper, {width: el.props.badgeSize || this.props.badgeSize, height: el.props.badgeSize || this.props.badgeSize,
-                                    borderRadius: (el.props.badgeSize || this.props.badgeSize) / 2}, {right: this.state.tabWidth / 4}]}>
+                                <View
+                                    style={[styles.popoverArrow, {borderTopColor: this.props.popoverBackgroundColor}, this.getArrowDynamicStyle()]}/>
+                            </Animatable.View> : null}
+                        {this.props.badges && this.props.badges[el.props.sceneKey] && this.state.tabWidth && this.state.tabHeight ?
+                            <Animatable.View ref={"badge" + el.props.sceneKey} iterationCount={5}
+                                             style={[styles.badgeWrapper, {
+                                                 width: this.props.badgeSize,
+                                                 height: this.props.badgeSize,
+                                                 padding: 0.5,
+                                                 backgroundColor: this.props.badgeBackgroundColor,
+                                                 borderRadius: (this.props.badgeSize) / 2
+                                             }, {right: this.state.tabWidth / 4}]}>
                                 <Text
-                                    style={[styles.badgeText, {marginLeft: 1, marginTop: 1}]}>{el.props.badge.count || 0}</Text>
-                            </View> : null}
+                                    style={[styles.badgeText, {
+                                        marginLeft: 1,
+                                        marginTop: 1
+                                    }]}>{this.props.badges[el.props.sceneKey].count || 0}</Text>
+                            </Animatable.View> : null}
                     </View>
                 )}
             </View>
@@ -146,23 +211,21 @@ var styles = StyleSheet.create({
         //borderColor: 'rgba(200,200,200,0.65)',
         //borderWidth: 1,
         padding: 3,
-        borderRadius: 5,
-        backgroundColor: 'rgba(208,69,116,1)',
-        shadowColor: '#000000',
-        shadowOpacity: 0.5,
-        shadowRadius: 2,
-        shadowOffset: {
-            height: 2,
-            width: 2
-        }
+        borderRadius: 8,
+        // shadowColor: '#000000',
+        // shadowOpacity: 0.5,
+        // shadowRadius: 2,
+        // shadowOffset: {
+        //     height: 2,
+        //     width: 2
+        // }
     },
     popoverText: {
         fontFamily: 'AvenirNext-Regular',
-        fontSize: 10,
-        //color: 'rgba(0,0,0,0.65)',
+        fontSize: 12,
         color: '#FFF',
         textAlign: 'center',
-        textShadowOffset: {width: 1, height: 1}, textShadowRadius: 1, textShadowColor: '#222222'
+        //textShadowOffset: {width: 1, height: 1}, textShadowRadius: 1, textShadowColor: '#222222'
     },
     popoverArrowWrapper: {
         flex: 1,
@@ -177,19 +240,17 @@ var styles = StyleSheet.create({
         borderStyle: 'solid',
         borderLeftColor: 'transparent',
         borderRightColor: 'transparent',
-        borderTopColor: 'rgba(208,69,116,1)',
-        shadowColor: '#000000',
-        shadowOpacity: 0.5,
-        shadowRadius: 2,
-        shadowOffset: {
-            height: 2,
-            width: 2
-        }
+        // shadowColor: '#000000',
+        // shadowOpacity: 0.5,
+        // shadowRadius: 2,
+        // shadowOffset: {
+        //     height: 2,
+        //     width: 2
+        // }
     },
     badgeWrapper: {
         position: 'absolute',
         top: 3,
-        backgroundColor: 'red',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center'
