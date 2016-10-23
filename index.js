@@ -19,7 +19,8 @@ State = {
     keyboardUp: boolean,
 };
 
-type State = {
+type
+State = {
     keyboardUp: boolean,
 };
 
@@ -164,7 +165,8 @@ class Tabs extends Component {
                                 <View
                                     style={[styles.popoverArrow, {borderTopColor: this.props.popoverBackgroundColor}, this.getArrowDynamicStyle()]}/>
                             </Animatable.View> : null}
-                        {this.props.badges && this.props.badges[el.props.sceneKey] && this.state.tabWidth && this.state.tabHeight ?
+                        {this.props.badges && this.props.badges[el.props.sceneKey] && this.props.badges[el.props.sceneKey].count !== undefined
+                        && this.state.tabWidth && this.state.tabHeight ?
                             <Animatable.View ref={"badge" + el.props.sceneKey} iterationCount={5}
                                              style={[styles.badgeWrapper, {
                                                  width: this.props.badgeSize,
