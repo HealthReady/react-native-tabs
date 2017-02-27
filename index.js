@@ -138,6 +138,10 @@ class Tabs extends Component {
         }
         return (
             <View style={[styles.tabbarView, style]}>
+                {this.props.tabBarBorderTopMargin ? <View
+                        style={{position: 'absolute', top: 0, left: this.props.tabBarBorderTopMargin, right: this.props.tabBarBorderTopMargin,
+                            bottom: 0, borderTopWidth: this.props.style.borderTopWidth || 1, borderTopColor: this.props.style.borderTopColor || '#FFF'}}/>
+                    : null}
                 {React.Children.map(this.props.children.filter(c => c), (el) =>
                     <View style={{flex: 1}} onLayout={(event) => {
                         var {x, y, width, height} = event.nativeEvent.layout;
@@ -187,10 +191,6 @@ class Tabs extends Component {
                             </Animatable.View> : null}
                     </View>
                 )}
-                {this.props.tabBarBorderTopMargin ? <View
-                        style={{position: 'absolute', top: 0, left: this.props.tabBarBorderTopMargin, right: this.props.tabBarBorderTopMargin,
-                            bottom: 0, borderTopWidth: this.props.style.borderTopWidth || 1, borderTopColor: this.props.style.borderTopColor || '#FFF'}}/>
-                    : null}
             </View>
         );
     }
