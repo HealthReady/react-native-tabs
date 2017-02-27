@@ -15,12 +15,12 @@ import {
 import * as Animatable from 'react-native-animatable';
 
 type
-State = {
+    State = {
     keyboardUp: boolean,
 };
 
 type
-State = {
+    State = {
     keyboardUp: boolean,
 };
 
@@ -71,7 +71,7 @@ class Tabs extends Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        React.Children.forEach(this.props.children.filter(c=>c), el=> {
+        React.Children.forEach(this.props.children.filter(c => c), el => {
             if (this.props.popovers) {
                 if (this.props.popovers[el.props.sceneKey] === undefined && nextProps.popovers[el.props.sceneKey]) {
 
@@ -126,15 +126,19 @@ class Tabs extends Component {
         const self = this;
         let selected = this.props.selected
         if (!selected) {
-            React.Children.forEach(this.props.children.filter(c=>c), el=> {
+            React.Children.forEach(this.props.children.filter(c => c), el => {
                 if (!selected || el.props.initial) {
                     selected = el.props.name || el.key;
                 }
             });
         }
+        var style = {...this.props.style};
+        if (this.props.tabBarBorderTopMargin) {
+            style.borderTopWidth = 0;
+        }
         return (
-            <View style={[styles.tabbarView, this.props.style]}>
-                {React.Children.map(this.props.children.filter(c=>c), (el)=>
+            <View style={[styles.tabbarView, style]}>
+                {React.Children.map(this.props.children.filter(c => c), (el) =>
                     <View style={{flex: 1}} onLayout={(event) => {
                         var {x, y, width, height} = event.nativeEvent.layout;
                         this.setState({tabX: x, tabY: y, tabWidth: width, tabHeight: height})
@@ -146,9 +150,9 @@ class Tabs extends Component {
                                           onLongPress={()=>self.onSelect(el)}
                                           activeOpacity={el.props.pressOpacity}>
                             {selected == (el.props.name || el.key) ? React.cloneElement(el, {
-                                selected: true,
-                                style: [el.props.style, this.props.selectedStyle, el.props.selectedStyle]
-                            }) : el}
+                                    selected: true,
+                                    style: [el.props.style, this.props.selectedStyle, el.props.selectedStyle]
+                                }) : el}
                         </TouchableOpacity>
                         {this.props.popovers && this.props.popovers[el.props.sceneKey] && this.state.tabWidth && this.state.tabHeight ?
                             <Animatable.View ref={"popover" + el.props.sceneKey} style={[styles.popoverContainer, {
@@ -183,6 +187,10 @@ class Tabs extends Component {
                             </Animatable.View> : null}
                     </View>
                 )}
+                {this.props.tabBarBorderTopMargin ? <View
+                        style={{position: 'absolute', top: 0, left: this.props.tabBarBorderTopMargin, right: this.props.tabBarBorderTopMargin,
+                            bottom: 0, borderTopWidth: this.props.style.borderTopWidth || 1, borderTopColor: this.props.style.borderTopColor || '#FFF'}}/>
+                    : null}
             </View>
         );
     }
